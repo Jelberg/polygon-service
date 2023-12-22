@@ -7,6 +7,7 @@ exports.env_polygon = void 0;
 var dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 exports.env_polygon = {
-    key: process.env.POLYGON_KEY
+    key: process.env.POLYGON_KEY,
+    limit: process.env.POLYGON_LIMIT_RESULTS || 10
 };
 //# sourceMappingURL=enviroments.js.map
