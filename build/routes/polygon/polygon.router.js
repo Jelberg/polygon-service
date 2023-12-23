@@ -53,7 +53,7 @@ router.get('/stock', function (req, res) { return __awaiter(void 0, void 0, void
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                _a.trys.push([0, 2, , 6]);
+                _a.trys.push([0, 2, , 3]);
                 console.log(watchlist_1.wl.length);
                 if (watchlist_1.wl.length === 0) {
                     console.error('El arreglo está vacío. No se realizarán solicitudes.');
@@ -76,7 +76,7 @@ router.get('/stock', function (req, res) { return __awaiter(void 0, void 0, void
                                 case 0:
                                     _a.trys.push([0, 3, , 4]);
                                     quote = void 0;
-                                    return [4 /*yield*/, axios_1.default.get("https://api.polygon.io/v2/aggs/ticker/".concat(element['ticket'].toUpperCase(), "/range/1/minute/").concat(formatDate_1, "/").concat(formatDate_1, "?adjusted=true&sort=desc&limit=2&apiKey=").concat(apiKey))];
+                                    return [4 /*yield*/, axios_1.default.get("https://api.polygon.io/v2/aggs/ticker/".concat(element.ticket.toUpperCase(), "/range/1/minute/").concat(formatDate_1, "/").concat(formatDate_1, "?adjusted=true&sort=desc&limit=2&apiKey=").concat(apiKey))];
                                 case 1:
                                     quote = _a.sent();
                                     results = quote.data.results;
@@ -93,7 +93,7 @@ router.get('/stock', function (req, res) { return __awaiter(void 0, void 0, void
                                         console.error('No hay suficientes datos para calcular la variación.');
                                     }
                                     response_1.push({
-                                        company: watchlist_1.wl.filter(function (element) { return element.ticket === element['ticket'].toUpperCase(); }),
+                                        company: watchlist_1.wl.filter(function (t) { return t.ticket.toUpperCase() === element.ticket.toUpperCase(); }),
                                         quote: quote.data,
                                         signal: signal_1,
                                         value: value_1,
@@ -116,22 +116,18 @@ router.get('/stock', function (req, res) { return __awaiter(void 0, void 0, void
                 _a.sent();
                 console.log(response_1);
                 res.json(response_1);
-                return [3 /*break*/, 6];
+                return [3 /*break*/, 3];
             case 2:
                 error_1 = _a.sent();
-                if (!(error_1.isAxiosError && error_1.response.status === 429)) return [3 /*break*/, 4];
-                console.error('Error: Has excedido la cantidad máxima de solicitudes por minuto.');
-                console.error('Esperando 1 minuto antes de volver a intentar...');
-                return [4 /*yield*/, wait(60000)];
-            case 3:
-                _a.sent(); // 60000 milisegundos = 1 minuto
-                return [3 /*break*/, 5];
-            case 4:
-                console.error('Error en la función principal:', error_1.message);
-                res.status(500).json({ error: 'Error to get data' });
-                _a.label = 5;
-            case 5: return [3 /*break*/, 6];
-            case 6: return [2 /*return*/];
+                if (error_1.isAxiosError && error_1.response.status === 429) {
+                    console.error('Error: Has excedido la cantidad máxima de solicitudes por minuto.');
+                }
+                else {
+                    console.error('Error en la función principal:', error_1.message);
+                    res.status(500).json({ error: 'Error to get data' });
+                }
+                return [3 /*break*/, 3];
+            case 3: return [2 /*return*/];
         }
     });
 }); });

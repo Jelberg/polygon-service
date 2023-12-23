@@ -1,12 +1,11 @@
 import express from "express";
 import routerApi from "../routes"
+import { env } from "../enviroments";
 
 export const app = express();
-const port = 3000;
 
-
-app.listen(port, () =>{
-    console.log("My port: " + port);
+app.listen(env.port, () =>{
+    console.log("My port: " + env.port);
   });
 
 routerApi(app)

@@ -8,7 +8,7 @@ exports.wl = [
     {
         "ticket": "AAPL",
         "company": "Apple Inc.",
-        "logo": ""
+        "logo": "https://s3.polygon.io/logos/aapl/logo.png"
     },
     {
         "ticket": "TSLA",
@@ -18,7 +18,7 @@ exports.wl = [
     {
         "ticket": "ADBE",
         "company": "Adobe Inc.",
-        "logo": ""
+        "logo": "https://s3.polygon.io/logos/adbe/logo.png"
     },
     {
         "ticket": "MSFT",
