@@ -29,7 +29,8 @@ export async function getWatchlistInfo() {
         try {
           let quote = await axios.get(`https://api.polygon.io/v2/aggs/ticker/${element.ticket.toUpperCase()}/range/1/minute/${formatDate}/${formatDate}?adjusted=true&sort=desc&limit=2&apiKey=${apiKey}`);
           const results = quote.data.results;
-
+          console.log(results);
+          if (!results) throw new Error ('Polygon return undefined results')
           // To validate the price variation and calculate the percentage, the first and last variation quotes are obtained, and the average is calculated
           if (results.length >= 2) {
             const first = results[0];

@@ -13,7 +13,7 @@ exports.wl = [
     {
         "ticket": "TSLA",
         "company": "Tesla Inc.",
-        "logo": ""
+        "logo": "https://s3.polygon.io/logos/tsla/logo.png"
     },
     {
         "ticket": "ADBE",
@@ -23,12 +23,12 @@ exports.wl = [
     {
         "ticket": "MSFT",
         "company": "Microsoft Corporation Inc.",
-        "logo": ""
+        "logo": "https://s3.polygon.io/logos/msft/logo.png"
     },
     {
         "ticket": "AMZN",
         "company": "Amazon Inc.",
-        "logo": ""
+        "logo": "https://s3.polygon.io/logos/amzn/logo.png"
     }
 ];
 //# sourceMappingURL=watchlist.js.map

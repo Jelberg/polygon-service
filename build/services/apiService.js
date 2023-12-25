@@ -79,6 +79,9 @@ function getWatchlistInfo() {
                                     case 1:
                                         quote = _a.sent();
                                         results = quote.data.results;
+                                        console.log(results);
+                                        if (!results)
+                                            throw new Error('Polygon return undefined results');
                                         // To validate the price variation and calculate the percentage, the first and last variation quotes are obtained, and the average is calculated
                                         if (results.length >= 2) {
                                             first = results[0];
