@@ -6,7 +6,7 @@ This service, named "Polygon Service," connects to the Polygon IO Stock Market A
 
 - [Endpoints](#endpoints)
 - [Installation](#installation)
-- [Tree](#tree)
+- [Project Structure](#project-structure)
 
 ## Endpoints
 
@@ -34,15 +34,15 @@ npm install
 npm run start
 ```
 
-## Tree
+## Project Structure
 
-.
-├── src/
-│   ├── controllers/   # Handles service requests and responses
-│   ├── data/          # Where mock data is stored
-│   ├── loaders/       # Services and libraries that need to be initialized when the service starts
-│   ├── routes/        # Endpoints routes
-│   ├── services/      # Executes functions necessary for retrieving and operating on data
-│   ├── utils/         # Basic functions and methods for use throughout the service, e.g., pipes
-├── app.ts/            # Test cases
-├── environments.ts/   # Compiled or distributable files
+|-- src/
+|   |-- controllers/   # Handles service requests and responses
+|   |-- data/          # Where mock data is stored
+|   |-- loaders/       # Services and libraries that need to be initialized when the service starts
+|   |-- routes/        # Endpoints routes
+|   |-- services/      # Executes functions necessary for retrieving and operating on data
+|   |-- utils/         # Basic functions and methods for use throughout the service, e.g., pipes
+|-- app.ts/            # Test cases
+|-- environments.ts/   # Compiled or distributable files
+
