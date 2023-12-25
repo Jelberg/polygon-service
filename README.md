@@ -36,13 +36,15 @@ npm run start
 
 ## Project Structure
 
-|-- src/  
-| |-- controllers/   # Handles service requests and responses  
-| |-- data/          # Where mock data is stored  
-| |-- loaders/       # Services and libraries that need to be initialized when the service starts  
-| |-- routes/        # Endpoints routes  
-| |-- services/      # Executes functions necessary for retrieving and operating on data  
-| |-- utils/         # Basic functions and methods for use throughout the service, e.g., pipes  
-|-- app.ts/          # Test cases  
-|-- environments.ts/ # Compiled or distributable files  
+```bash
+|-- src/
+|   |-- controllers/   # Handles service requests and responses
+|   |-- data/          # Where mock data is stored
+|   |-- loaders/       # Services and libraries that need to be initialized when the service starts
+|   |-- routes/        # Endpoints routes
+|   |-- services/      # Executes functions necessary for retrieving and operating on data
+|   |-- utils/         # Basic functions and methods for use throughout the service, e.g., pipes
+|-- app.ts/            # Test cases
+|-- environments.ts/   # Compiled or distributable files
+```
 
