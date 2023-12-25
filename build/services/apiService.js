@@ -44,45 +44,40 @@ var axios_1 = __importDefault(require("axios"));
 var watchlist_1 = require("../data/watchlist");
 var enviroments_1 = require("../enviroments");
 var apiKey = enviroments_1.env_polygon.key;
+var polygonApiUrl = 'https://api.polygon.io';
 /**
  * Function that retrieves information from the watchlist
  */
 function getWatchlistInfo() {
     return __awaiter(this, void 0, void 0, function () {
-        var date, currentDate, formatDate_1, response_1, error_1;
+        var date, formatDate_1, response_1, error_1;
         var _this = this;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     _a.trys.push([0, 2, , 3]);
-                    // "wl" is the list that the user would have as a preference, in this case, it's just mock data
                     if (watchlist_1.wl.length === 0) {
                         console.error('Data is Empty.');
                         throw new Error('The WL array is empty.');
                     }
                     date = new Date();
-                    currentDate = new Date();
-                    // Takes the previous day since the API has restrictions
-                    date.setDate(currentDate.getDate() - 1);
+                    date.setDate(date.getDate() - 1);
                     formatDate_1 = date.toISOString().split('T')[0];
                     response_1 = [];
-                    // Using Promise.all to wait for all promises to resolve
-                    return [4 /*yield*/, Promise.all(
-                        // Iterating over the list to fetch all tickets from the watchlist
-                        watchlist_1.wl.map(function (element) { return __awaiter(_this, void 0, void 0, function () {
-                            var quote, results, first, last, variation, value, fluctuation, signal, summary, error_2;
+                    return [4 /*yield*/, Promise.all(watchlist_1.wl.map(function (element) { return __awaiter(_this, void 0, void 0, function () {
+                            var endpoint, quote, results, first, last, variation, value, fluctuation, signal, summary, error_2;
                             return __generator(this, function (_a) {
                                 switch (_a.label) {
                                     case 0:
                                         _a.trys.push([0, 2, , 3]);
-                                        return [4 /*yield*/, axios_1.default.get("https://api.polygon.io/v2/aggs/ticker/".concat(element.ticket.toUpperCase(), "/range/1/minute/").concat(formatDate_1, "/").concat(formatDate_1, "?adjusted=true&sort=desc&limit=2&apiKey=").concat(apiKey))];
+                                        endpoint = "/v2/aggs/ticker/".concat(element.ticket.toUpperCase(), "/range/1/minute/").concat(formatDate_1, "/").concat(formatDate_1, "?adjusted=true&sort=desc&limit=2&apiKey=").concat(apiKey);
+                                        return [4 /*yield*/, axios_1.default.get(polygonApiUrl + endpoint)];
                                     case 1:
                                         quote = _a.sent();
                                         results = quote.data.results;
-                                        console.log(results);
-                                        if (!results)
-                                            throw new Error('Polygon return undefined results');
-                                        // To validate the price variation and calculate the percentage, the first and last variation quotes are obtained, and the average is calculated
+                                        if (!results) {
+                                            throw new Error('Polygon returned undefined results');
+                                        }
                                         if (results.length >= 2) {
                                             first = results[0];
                                             last = results[results.length - 1];
@@ -91,7 +86,6 @@ function getWatchlistInfo() {
                                             fluctuation = (variation / first.c) * 100;
                                             signal = variation >= 0 ? '+' : '-';
                                             summary = "".concat(variation.toFixed(2), "$ (").concat(fluctuation.toFixed(2), "%)");
-                                            // If, for some reason, the variation list is not obtained, it is not added to the result returned in the endpoint
                                             response_1.push({
                                                 company: watchlist_1.wl.filter(function (t) { return t.ticket.toUpperCase() === element.ticket.toUpperCase(); }),
                                                 quote: quote.data,
@@ -114,18 +108,11 @@ function getWatchlistInfo() {
                             });
                         }); }))];
                 case 1:
-                    // Using Promise.all to wait for all promises to resolve
                     _a.sent();
                     return [2 /*return*/, response_1];
                 case 2:
                     error_1 = _a.sent();
-                    // Aiming to catch the axios error related to the limit when querying the API
-                    if (error_1.isAxiosError && error_1.response.status === 429) {
-                        throw new Error('Error: You have exceeded the maximum number of requests per minute.');
-                    }
-                    else {
-                        throw new Error(error_1.message);
-                    }
+                    handleErrors(error_1);
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
             }
@@ -133,29 +120,47 @@ function getWatchlistInfo() {
     });
 }
 exports.getWatchlistInfo = getWatchlistInfo;
-// Function to wait for a period of time
+/**
+ * Utility function to handle errors consistently
+ * @param {*} error
+ */
+function handleErrors(error) {
+    if (axios_1.default.isAxiosError && error.response && error.response.status === 429) {
+        throw new Error('Error: You have exceeded the maximum number of requests per minute.');
+    }
+    else {
+        throw new Error(error.message || 'An error occurred.');
+    }
+}
+/**
+ * Function to wait for a period of time
+ * @param {number} ms - milliseconds to wait
+ * @returns {Promise<void>}
+ */
 function wait(ms) {
     return new Promise(function (resolve) { return setTimeout(resolve, ms); });
 }
 /**
  * Gets information about the company based on the ticket
- * @param ticker
- * @returns
+ * @param {string} ticker
+ * @returns {Promise<any>}
  */
 function getInfoCompanyByTicker(ticker) {
     return __awaiter(this, void 0, void 0, function () {
-        var response, error_3;
+        var endpoint, response, error_3;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     _a.trys.push([0, 2, , 3]);
-                    return [4 /*yield*/, axios_1.default.get("https://api.polygon.io/v1/meta/symbols/".concat(ticker.toUpperCase(), "/company?apiKey=").concat(apiKey))];
+                    endpoint = "/v1/meta/symbols/".concat(ticker.toUpperCase(), "/company?apiKey=").concat(apiKey);
+                    return [4 /*yield*/, axios_1.default.get(polygonApiUrl + endpoint)];
                 case 1:
                     response = _a.sent();
                     return [2 /*return*/, response.data];
                 case 2:
                     error_3 = _a.sent();
-                    throw new Error('Error fetching stock details.');
+                    handleErrors(error_3);
+                    return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
             }
         });
@@ -164,29 +169,28 @@ function getInfoCompanyByTicker(ticker) {
 exports.getInfoCompanyByTicker = getInfoCompanyByTicker;
 /**
  * Gets the value difference of a ticket per minute for the previous day
- * @param ticker
- * @returns
+ * @param {string} ticker
+ * @returns {Promise<any>}
  */
 function getQuoteInfoByTicker(ticker) {
     return __awaiter(this, void 0, void 0, function () {
-        var date, currentDate, formatDate, response, error_4;
+        var date, formatDate, endpoint, response, error_4;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     _a.trys.push([0, 2, , 3]);
                     date = new Date();
-                    currentDate = new Date();
-                    // Takes the previous day since the API has restrictions
-                    date.setDate(currentDate.getDate() - 1);
+                    date.setDate(date.getDate() - 1);
                     formatDate = date.toISOString().split('T')[0];
-                    return [4 /*yield*/, axios_1.default.get("https://api.polygon.io/v2/aggs/ticker/".concat(ticker.toUpperCase(), "/range/1/minute/").concat(formatDate, "/").concat(formatDate, "?adjusted=true&sort=desc&limit=").concat(enviroments_1.env_polygon.limit, "&apiKey=").concat(apiKey))];
+                    endpoint = "/v2/aggs/ticker/".concat(ticker.toUpperCase(), "/range/1/minute/").concat(formatDate, "/").concat(formatDate, "?adjusted=true&sort=desc&limit=").concat(enviroments_1.env_polygon.limit, "&apiKey=").concat(apiKey);
+                    return [4 /*yield*/, axios_1.default.get(polygonApiUrl + endpoint)];
                 case 1:
                     response = _a.sent();
                     return [2 /*return*/, response.data];
                 case 2:
                     error_4 = _a.sent();
-                    console.log(error_4);
-                    throw new Error('Error fetching real-time quotes.');
+                    handleErrors(error_4);
+                    return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
             }
         });

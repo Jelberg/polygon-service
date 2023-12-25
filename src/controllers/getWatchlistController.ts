@@ -1,4 +1,4 @@
-import {  Request, Response } from "express";
+import { Request, Response } from "express";
 import { getWatchlistInfo } from "../services/apiService";
 
 /**
@@ -9,10 +9,19 @@ import { getWatchlistInfo } from "../services/apiService";
  */
 export async function getWatchlistController(req: Request, res: Response) {
     try {
-        const result = await getWatchlistInfo()
-        return res.status(200).send(result)
-
+        const result = await getWatchlistInfo();
+        return res.status(200).send(result);
     } catch (error) {
-        return res.status(500).send(error)
+    
+        console.log(error);
+        const errorMessage = error.message || "An error occurred.";
+        if (error.status) {
+        // Use the status from the error object
+        return res.status(error.status).send(errorMessage);
+    } else if (error.isAxiosError && error.response && error.response.status) {
+            return res.status(error.response.status).send(errorMessage);
+        } else {
+            return res.status(500).send(errorMessage);
+        }
     }
 }

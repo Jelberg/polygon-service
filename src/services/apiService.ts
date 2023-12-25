@@ -1,37 +1,51 @@
-import axios, {} from 'axios';
+import axios, { AxiosError } from 'axios';
 import { wl } from '../data/watchlist';
 import { env_polygon } from '../enviroments';
 
 const apiKey = env_polygon.key;
+const polygonApiUrl = 'https://api.polygon.io';
+
+// Constants for error messages
+const ERROR_MESSAGES = {
+  EMPTY_DATA: 'The WL array is empty.',
+  UNDEFINED_RESULTS: 'Polygon returned undefined results',
+  NOT_ENOUGH_DATA: 'Not enough data to calculate the variation.',
+  EXCEEDED_REQUEST_LIMIT: 'You have exceeded the maximum number of requests per minute.',
+  GENERAL_ERROR: 'An error occurred.',
+};
 
 /**
  * Function that retrieves information from the watchlist
  */
 export async function getWatchlistInfo() {
   try {
-    // "wl" is the list that the user would have as a preference, in this case, it's just mock data
+    // Check if watchlist is empty
     if (wl.length === 0) {
       console.error('Data is Empty.');
-      throw new Error('The WL array is empty.');
+      throw new Error(ERROR_MESSAGES.EMPTY_DATA);
     }
 
     const date = new Date();
-    const currentDate = new Date();
-    // Takes the previous day since the API has restrictions
-    date.setDate(currentDate.getDate() - 1);
+    date.setDate(date.getDate() - 1);
     const formatDate = date.toISOString().split('T')[0];
-    let response = [];
+    const response = [];
 
-    // Using Promise.all to wait for all promises to resolve
+    // Use Promise.all to concurrently fetch information for each element in the watchlist
     await Promise.all(
-      // Iterating over the list to fetch all tickets from the watchlist
       wl.map(async (element) => {
         try {
-          let quote = await axios.get(`https://api.polygon.io/v2/aggs/ticker/${element.ticket.toUpperCase()}/range/1/minute/${formatDate}/${formatDate}?adjusted=true&sort=desc&limit=2&apiKey=${apiKey}`);
+          // Construct the API endpoint for each element in the watchlist
+          const endpoint = `/v2/aggs/ticker/${element.ticket.toUpperCase()}/range/1/minute/${formatDate}/${formatDate}?adjusted=true&sort=desc&limit=2&apiKey=${apiKey}`;
+          // Make the API request
+          const quote = await axios.get(polygonApiUrl + endpoint);
           const results = quote.data;
-          console.log(results);
-          if (!results) throw new Error ('Polygon return undefined results')
-          // To validate the price variation and calculate the percentage, the first and last variation quotes are obtained, and the average is calculated
+
+          // Check if the results are undefined
+          if (!results) {
+            throw new Error(ERROR_MESSAGES.UNDEFINED_RESULTS);
+          }
+
+          // Check if there are enough data points to calculate the variation
           if (results.length >= 2) {
             const first = results[0];
             const last = results[results.length - 1];
@@ -41,77 +55,122 @@ export async function getWatchlistInfo() {
 
             const fluctuation = (variation / first.c) * 100;
 
-            // Assigns the sign to a variable to know if it goes up or down in value
+            // Assign the sign to a variable to know if it goes up or down in value
             const signal = variation >= 0 ? '+' : '-';
             const summary = `${variation.toFixed(2)}$ (${fluctuation.toFixed(2)}%)`;
 
-            // If, for some reason, the variation list is not obtained, it is not added to the result returned in the endpoint
             response.push({
               company: wl.filter((t) => t.ticket.toUpperCase() === element.ticket.toUpperCase()),
               quote: quote.data,
-              signal: signal,
-              value: value,
-              summary: summary,
+              signal,
+              value,
+              summary,
             });
             console.log(response);
           } else {
-            console.error('Not enough data to calculate the variation.');
+            // If there is not enough data, throw a new error with a specific message
+            throw new Error(ERROR_MESSAGES.NOT_ENOUGH_DATA);
           }
         } catch (error) {
           console.error('Error in the request:', error.message);
+          // Re-throw the error to be caught in the outer catch block
           throw error;
         }
       })
     );
-
     return response;
   } catch (error) {
-    // Aiming to catch the axios error related to the limit when querying the API
-    if (error.isAxiosError && error.response.status === 429) {
-      throw new Error('Error: You have exceeded the maximum number of requests per minute.');
-    } else {
-      throw new Error(error.message);
-    }
+    // Handle the specific error here before calling the handleErrors function
+    console.log('entrooo en el ultimo error')
+    return handleErrors(error);
   }
 }
 
-// Function to wait for a period of time
-function wait(ms: number) {
+/**
+ * Utility function to handle errors consistently
+ * @param {Error} error
+ * @returns {Object} - Object containing status and message
+ */
+function handleErrors(error: Error) {
+  const errorMessage = getErrorMessage(error);
+  const status = getErrorStatus(error);
+  throw { status, message: errorMessage };
+}
+
+/**
+ * Get the error message based on the exception
+ * @param {Error} error
+ * @returns {string}
+ */
+function getErrorMessage(error: Error) {
+  switch (error.message) {
+    case ERROR_MESSAGES.NOT_ENOUGH_DATA:
+      return ERROR_MESSAGES.NOT_ENOUGH_DATA;
+    // Add more cases as needed
+    default:
+      return ERROR_MESSAGES.GENERAL_ERROR;
+  }
+}
+
+/**
+ * Get the status code based on the exception
+ * @param {Error} error
+ * @returns {number}
+ */
+function getErrorStatus(error: Error) {
+  switch (error.message) {
+    case ERROR_MESSAGES.NOT_ENOUGH_DATA:
+      return 400; 
+    case ERROR_MESSAGES.EXCEEDED_REQUEST_LIMIT:
+      return 429; 
+    case ERROR_MESSAGES.UNDEFINED_RESULTS:
+      return 400;
+    case ERROR_MESSAGES.EMPTY_DATA:
+      return 400; 
+    default:
+      return 500; // Internal Server Error
+  }
+}
+
+
+/**
+ * Function to wait for a period of time
+ * @param {number} ms - milliseconds to wait
+ * @returns {Promise<void>}
+ */
+function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
  * Gets information about the company based on the ticket
- * @param ticker
- * @returns
+ * @param {string} ticker
+ * @returns {Promise<any>}
  */
-export async function getInfoCompanyByTicker(ticker: string) {
+export async function getInfoCompanyByTicker(ticker) {
   try {
-    const response = await axios.get(`https://api.polygon.io/v1/meta/symbols/${ticker.toUpperCase()}/company?apiKey=${apiKey}`);
+    const endpoint = `/v1/meta/symbols/${ticker.toUpperCase()}/company?apiKey=${apiKey}`;
+    const response = await axios.get(polygonApiUrl + endpoint);
     return response.data;
   } catch (error) {
-    throw new Error('Error fetching stock details.');
+    handleErrors(error);
   }
 }
 
 /**
  * Gets the value difference of a ticket per minute for the previous day
- * @param ticker
- * @returns
+ * @param {string} ticker
+ * @returns {Promise<any>}
  */
-export async function getQuoteInfoByTicker(ticker: string) {
+export async function getQuoteInfoByTicker(ticker) {
   try {
     const date = new Date();
-    const currentDate = new Date();
-    // Takes the previous day since the API has restrictions
-    date.setDate(currentDate.getDate() - 1);
-    // Transforms the date format
+    date.setDate(date.getDate() - 1);
     const formatDate = date.toISOString().split('T')[0];
-    const response = await axios.get(`https://api.polygon.io/v2/aggs/ticker/${ticker.toUpperCase()}/range/1/minute/${formatDate}/${formatDate}?adjusted=true&sort=desc&limit=${env_polygon.limit}&apiKey=${apiKey}`);
-
+    const endpoint = `/v2/aggs/ticker/${ticker.toUpperCase()}/range/1/minute/${formatDate}/${formatDate}?adjusted=true&sort=desc&limit=${env_polygon.limit}&apiKey=${apiKey}`;
+    const response = await axios.get(polygonApiUrl + endpoint);
     return response.data;
   } catch (error) {
-    console.log(error);
-    throw new Error('Error fetching real-time quotes.');
+    handleErrors(error);
   }
 }

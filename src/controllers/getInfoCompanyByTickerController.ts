@@ -14,6 +14,12 @@ export async function getInfoCompanyByTickerController(req: Request, res: Respon
         return res.status(200).send(result)
 
     } catch (error) {
-        return res.status(500).send(error)
+        const errorMessage = error.message || "An error occurred.";
+
+        if (error.isAxiosError && error.response && error.response.status) {
+            return res.status(error.response.status).send(errorMessage);
+        } else {
+            return res.status(500).send(errorMessage);
+        }
     }
 }
