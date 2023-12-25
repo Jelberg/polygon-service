@@ -45,6 +45,14 @@ var watchlist_1 = require("../data/watchlist");
 var enviroments_1 = require("../enviroments");
 var apiKey = enviroments_1.env_polygon.key;
 var polygonApiUrl = 'https://api.polygon.io';
+// Constants for error messages
+var ERROR_MESSAGES = {
+    EMPTY_DATA: 'The WL array is empty.',
+    UNDEFINED_RESULTS: 'Polygon returned undefined results',
+    NOT_ENOUGH_DATA: 'Not enough data to calculate the variation.',
+    EXCEEDED_REQUEST_LIMIT: 'You have exceeded the maximum number of requests per minute.',
+    GENERAL_ERROR: 'An error occurred.',
+};
 /**
  * Function that retrieves information from the watchlist
  */
@@ -56,14 +64,16 @@ function getWatchlistInfo() {
             switch (_a.label) {
                 case 0:
                     _a.trys.push([0, 2, , 3]);
+                    // Check if watchlist is empty
                     if (watchlist_1.wl.length === 0) {
                         console.error('Data is Empty.');
-                        throw new Error('The WL array is empty.');
+                        throw new Error(ERROR_MESSAGES.EMPTY_DATA);
                     }
                     date = new Date();
                     date.setDate(date.getDate() - 1);
                     formatDate_1 = date.toISOString().split('T')[0];
                     response_1 = [];
+                    // Use Promise.all to concurrently fetch information for each element in the watchlist
                     return [4 /*yield*/, Promise.all(watchlist_1.wl.map(function (element) { return __awaiter(_this, void 0, void 0, function () {
                             var endpoint, quote, results, first, last, variation, value, fluctuation, signal, summary, error_2;
                             return __generator(this, function (_a) {
@@ -74,10 +84,12 @@ function getWatchlistInfo() {
                                         return [4 /*yield*/, axios_1.default.get(polygonApiUrl + endpoint)];
                                     case 1:
                                         quote = _a.sent();
-                                        results = quote.data.results;
+                                        results = quote.data;
+                                        // Check if the results are undefined
                                         if (!results) {
-                                            throw new Error('Polygon returned undefined results');
+                                            throw new Error(ERROR_MESSAGES.UNDEFINED_RESULTS);
                                         }
+                                        // Check if there are enough data points to calculate the variation
                                         if (results.length >= 2) {
                                             first = results[0];
                                             last = results[results.length - 1];
@@ -96,24 +108,28 @@ function getWatchlistInfo() {
                                             console.log(response_1);
                                         }
                                         else {
-                                            console.error('Not enough data to calculate the variation.');
+                                            // If there is not enough data, throw a new error with a specific message
+                                            throw new Error(ERROR_MESSAGES.NOT_ENOUGH_DATA);
                                         }
                                         return [3 /*break*/, 3];
                                     case 2:
                                         error_2 = _a.sent();
                                         console.error('Error in the request:', error_2.message);
+                                        // Re-throw the error to be caught in the outer catch block
                                         throw error_2;
                                     case 3: return [2 /*return*/];
                                 }
                             });
                         }); }))];
                 case 1:
+                    // Use Promise.all to concurrently fetch information for each element in the watchlist
                     _a.sent();
                     return [2 /*return*/, response_1];
                 case 2:
                     error_1 = _a.sent();
-                    handleErrors(error_1);
-                    return [3 /*break*/, 3];
+                    // Handle the specific error here before calling the handleErrors function
+                    console.log(error_1);
+                    return [2 /*return*/, handleErrors(error_1)];
                 case 3: return [2 /*return*/];
             }
         });
@@ -122,14 +138,45 @@ function getWatchlistInfo() {
 exports.getWatchlistInfo = getWatchlistInfo;
 /**
  * Utility function to handle errors consistently
- * @param {*} error
+ * @param {Error} error
+ * @returns {Object} - Object containing status and message
  */
 function handleErrors(error) {
-    if (axios_1.default.isAxiosError && error.response && error.response.status === 429) {
-        throw new Error('Error: You have exceeded the maximum number of requests per minute.');
+    var errorMessage = getErrorMessage(error);
+    var status = getErrorStatus(error);
+    throw { status: status, message: errorMessage };
+}
+/**
+ * Get the error message based on the exception
+ * @param {Error} error
+ * @returns {string}
+ */
+function getErrorMessage(error) {
+    switch (error.message) {
+        case ERROR_MESSAGES.NOT_ENOUGH_DATA:
+            return ERROR_MESSAGES.NOT_ENOUGH_DATA;
+        // Add more cases as needed
+        default:
+            return ERROR_MESSAGES.GENERAL_ERROR;
     }
-    else {
-        throw new Error(error.message || 'An error occurred.');
+}
+/**
+ * Get the status code based on the exception
+ * @param {Error} error
+ * @returns {number}
+ */
+function getErrorStatus(error) {
+    switch (error.message) {
+        case ERROR_MESSAGES.NOT_ENOUGH_DATA:
+            return 400;
+        case ERROR_MESSAGES.EXCEEDED_REQUEST_LIMIT:
+            return 429;
+        case ERROR_MESSAGES.UNDEFINED_RESULTS:
+            return 400;
+        case ERROR_MESSAGES.EMPTY_DATA:
+            return 400;
+        default:
+            return 500; // Internal Server Error
     }
 }
 /**

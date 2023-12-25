@@ -81,7 +81,6 @@ export async function getWatchlistInfo() {
     return response;
   } catch (error) {
     // Handle the specific error here before calling the handleErrors function
-    console.log('entrooo en el ultimo error')
     return handleErrors(error);
   }
 }
@@ -92,6 +91,11 @@ export async function getWatchlistInfo() {
  * @returns {Object} - Object containing status and message
  */
 function handleErrors(error: Error) {
+ 
+  if (axios.isAxiosError(error)) {
+    throw error
+  }
+
   const errorMessage = getErrorMessage(error);
   const status = getErrorStatus(error);
   throw { status, message: errorMessage };
@@ -106,7 +110,13 @@ function getErrorMessage(error: Error) {
   switch (error.message) {
     case ERROR_MESSAGES.NOT_ENOUGH_DATA:
       return ERROR_MESSAGES.NOT_ENOUGH_DATA;
-    // Add more cases as needed
+    case ERROR_MESSAGES.EMPTY_DATA:
+      return ERROR_MESSAGES.EMPTY_DATA;
+    case ERROR_MESSAGES.EXCEEDED_REQUEST_LIMIT:
+      return ERROR_MESSAGES.EXCEEDED_REQUEST_LIMIT;
+    case ERROR_MESSAGES.GENERAL_ERROR:
+      return ERROR_MESSAGES.GENERAL_ERROR;
+  
     default:
       return ERROR_MESSAGES.GENERAL_ERROR;
   }

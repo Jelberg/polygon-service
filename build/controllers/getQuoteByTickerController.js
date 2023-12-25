@@ -46,7 +46,7 @@ var apiService_1 = require("../services/apiService");
  */
 function getQuoteTickerController(req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var ticker, result, error_1;
+        var ticker, result, error_1, errorMessage;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -58,7 +58,14 @@ function getQuoteTickerController(req, res) {
                     return [2 /*return*/, res.status(200).send(result)];
                 case 2:
                     error_1 = _a.sent();
-                    return [2 /*return*/, res.status(500).send(error_1)];
+                    errorMessage = error_1.message || "An error occurred.";
+                    if (error_1.isAxiosError && error_1.response && error_1.response.status) {
+                        return [2 /*return*/, res.status(error_1.response.status).send(errorMessage)];
+                    }
+                    else {
+                        return [2 /*return*/, res.status(500).send(errorMessage)];
+                    }
+                    return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
             }
         });
